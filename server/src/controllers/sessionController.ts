@@ -13,6 +13,10 @@ interface ResultInput {
     feedback: string
 }
 
+interface SessionParams {
+    id: string
+}
+
 export async function saveSession(req: AuthRequest, res: Response) : Promise<void> {
     const { results, totalQuestions } = req.body as {
         results: ResultInput[]
@@ -52,5 +56,49 @@ export async function saveSession(req: AuthRequest, res: Response) : Promise<voi
     } catch (err) {
         console.error("saveSession error:", err)
         res.status(500).json({ error: "Failed to save session" })
+    }
+}
+
+export async function getMySessions(req: AuthRequest, res: Response): Promise<void> {
+    try {
+        const sessions = await prisma.session.findMany({
+            where: { userId: req.userId },
+            orderBy: { completedAt: 'desc' },
+            take: 20,
+            include: {
+                results: {
+                    select: {
+                        questionId: true,
+                        category: true,
+                        score: true,
+                        feedback: true,
+                    },
+                },
+            },
+        })
+        res.json({ sessions })
+    } catch (err) {
+        console.error('getMySessions:', err)
+        res.status(500).json({ error: 'Failed to fetch sessions' })
+    }
+}
+
+export async function getSession(req: AuthRequest & { params: SessionParams}, res: Response): Promise<void> {
+    const { id } = req.params
+
+    try {
+        const session = await prisma.session.findFirst({
+            where: { id, userId: req.userId },
+            include: { results: true },
+        })
+
+        if (!session) {
+            res.status(404).json({ error: 'Session not found' })
+            return
+        }
+        res.json({ session })
+    } catch (err) {
+        console.error('getSession error:', err)
+        res.status(500).json({ error: 'Failed to fetch session' })
     }
 }
