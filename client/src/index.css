@@ -11,4 +11,44 @@
   --color-bg: #f9f9f7;
   --color-surface: #ffffff;
   --color-surface-secondary: #f3f3f0;
+  --color-border: #e8e7e2;
+  --color-border-strong: #d0cfc8;
+
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #5f5e5a;
+  --color-text-muted: #9a9993;
+
+  --color-accent: #1D9E75;
+  --color-accent-hover: #0F6E56;
+  --color-accent-light: #e1f5ee;
+  --color-accent-text: #085041;
+
+  --color-warning-bg: #faeeda;
+  --color-warning-text: #854F0B;
+  --color-danger-bg: #fcebeb;
+  --color-danger-text: #a32d2d;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
