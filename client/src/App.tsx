@@ -1,121 +1,114 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useCallback } from "react";
+import { QUESTIONS } from "./data/questions";
+import type { SessionResult, Feedback } from "./types";
+import { useGemini } from "./hooks/useGemini";
+import ProgressBar from "./components/ProgressBar";
+import QuestionCard from "./components/QuestionCard";
+import ResultsScreen from "./components/ResultsScreen";
 
-function App() {
-  const [count, setCount] = useState(0)
+type View = 'practice' | 'results'
+
+export default function App() {
+  const [view, setView] = useState<View>('practice')
+  const [currentIdx, setCurrrentIdx] = useState(0)
+  const [answers, setAnswers] = useState<Map<number, string>>(new Map())
+  const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
+  const { evaluate, loading, error } = useGemini()
+
+  const currentQuestion = QUESTIONS[currentIdx]
+  const answeredCount = feedbacks.size
+
+  const handleSubmit = useCallback(
+    async (answer: string) => {
+      const feedback = await evaluate(currentQuestion.text, answer)
+      if (feedback) {
+        setAnswers((prev) => new Map(prev).set(currentQuestion.id, answer))
+        setFeedbacks((prev) => new Map(prev).set(currentQuestion.id, feedback))
+      }
+    },
+    [currentQuestion, evaluate]
+  )
+
+  const handleNext = () => {
+    if (currentIdx <  QUESTIONS.length - 1) setCurrrentIdx((i) => i+ 1)
+      else setView('results')
+  }
+
+  const handlePrev = () => {
+    if (currentIdx > 0) setCurrrentIdx((i) => i - 1)
+  }
+
+  const handleSkip = () => {
+    if (currentIdx < QUESTIONS.length - 1) setCurrrentIdx((i) => i + 1)
+      else setView('results')
+  }
+
+  const handleFinish = () => setView('results')
+
+  const handleRestart = () => {
+    setCurrrentIdx(0)
+    setAnswers(new Map())
+    setFeedbacks(new Map())
+    setView('practice')
+  }
+
+  const results = new Map<number, SessionResult>(
+    Array.from(feedbacks.entries()).map(([id, fb]) => [
+      id,
+      {
+        questionId: id,
+        answer: answers.get(id) ?? '',
+        score: fb.score,
+        feedback: fb.feedback
+      },
+    ])
+  )
+
+  const layout: React.CSSProperties = {
+    maxWidth: '680px',
+    margin: '0 auto',
+    padding: '2rem 1.25rem',
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={layout}>
+      {/* Header */}
+      <header style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '4px' }}>
+          Frontend interview prerp
+        </h1>
+        <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+          Answer each question and get AI feedback on your response.
+        </p>
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {view === 'practice' ? (
+        <>
+          <ProgressBar current={answeredCount} total={QUESTIONS.length} />
+          <QuestionCard 
+            key={currentQuestion.id}
+            question={currentQuestion}
+            index={currentIdx}
+            total={QUESTIONS.length}
+            savedAnswer={answers.get(currentQuestion.id)}
+            savedFeedback={feedbacks.get(currentQuestion.id)}
+            onSubmit={handleSubmit}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            onSkip={handleSkip}
+            loading={loading}
+            error={error}
+            isLast={currentIdx === QUESTIONS.length - 1}
+            onFinish={handleFinish}
+          />
+        </>
+      ) : (
+        <ResultsScreen 
+          questions={QUESTIONS}
+          results={results}
+          onRestart={handleRestart}
+        />
+      )}
+    </div>
   )
 }
-
-export default App
