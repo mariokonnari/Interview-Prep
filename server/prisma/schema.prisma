@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -18,25 +19,25 @@ model User {
 }
 
 model Session {
-  id           String          @id @default(cuid())
-  userId       String
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalScore   Float
-  avgScore     Float
-  answeredCount Int
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalScore     Float
+  avgScore       Float
+  answeredCount  Int
   totalQuestions Int
-  completedAt  DateTime        @default(now())
-  results      SessionResult[]
+  completedAt    DateTime        @default(now())
+  results        SessionResult[]
 }
 
 model SessionResult {
-  id         String  @id @default(cuid())
-  sessionId  String
-  session    Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  questionId Int
-  category   String
+  id           String  @id @default(cuid())
+  sessionId    String
+  session      Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId   Int
+  category     String
   questionText String
-  answer     String  @db.Text
-  score      Int
-  feedback   String  @db.Text
+  answer       String  @db.Text
+  score        Int
+  feedback     String  @db.Text
 }
