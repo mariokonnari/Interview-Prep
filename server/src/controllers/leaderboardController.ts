@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from '../generated/prisma'
+import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from "../middleware/authMiddleware";
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
