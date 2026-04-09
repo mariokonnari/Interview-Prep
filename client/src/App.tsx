@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { QUESTIONS } from "./data/questions";
 import type { SessionResult, Feedback } from "./types";
-import { useGemini } from "./hooks/useGemini";
+import { useGroq } from "./hooks/useGroq";
 import ProgressBar from "./components/ProgressBar";
 import QuestionCard from "./components/QuestionCard";
 import ResultsScreen from "./components/ResultsScreen";
@@ -13,7 +13,7 @@ export default function App() {
   const [currentIdx, setCurrrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Map<number, string>>(new Map())
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
-  const { evaluate, loading, error } = useGemini()
+  const { evaluate, loading, error } = useGroq()
 
   const currentQuestion = QUESTIONS[currentIdx]
   const answeredCount = feedbacks.size
