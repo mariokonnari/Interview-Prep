@@ -1,0 +1,95 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getLeaderboard = getLeaderboard;
+exports.getMyStats = getMyStats;
+const prisma_1 = __importDefault(require("../lib/prisma"));
+async function getLeaderboard(_req, res) {
+    try {
+        //Best single session per user ranked by average score
+        const topSessions = await prisma_1.default.session.findMany({
+            orderBy: { avgScore: 'desc' },
+            take: 20,
+            distinct: ['userId'],
+            select: {
+                id: true,
+                avgScore: true,
+                answeredCount: true,
+                totalQuestions: true,
+                completedAt: true,
+                user: {
+                    select: { username: true },
+                },
+            },
+        });
+        const leaderboard = topSessions.map((s, index) => ({
+            rank: index + 1,
+            username: s.user.username,
+            avgScore: Math.round(s.avgScore * 10) / 10,
+            answeredCount: s.answeredCount,
+            totalQuestions: s.totalQuestions,
+            completedAt: s.completedAt,
+        }));
+        res.json({ leaderboard });
+    }
+    catch (err) {
+        console.error('getLeaderboard error:', err);
+        res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    }
+}
+async function getMyStats(req, res) {
+    try {
+        const sessions = await prisma_1.default.session.findMany({
+            where: { userId: req.userId },
+            orderBy: { completedAt: 'desc' },
+        });
+        if (sessions.length === 0) {
+            res.json({
+                stats: {
+                    totalSessions: 0,
+                    bestAvgScore: 0,
+                    overallAvgScore: 0,
+                    totalQuestionsAnswered: 0,
+                    categoryBreakdown: [],
+                },
+            });
+            return;
+        }
+        const totalSessions = sessions.length;
+        const bestAvgScore = Math.max(...sessions.map((s) => s.avgScore));
+        const overallAvgScore = sessions.reduce((sum, s) => sum + s.avgScore, 0) / totalSessions;
+        const totalQuestionsAnswered = sessions.reduce((sum, s) => s.answeredCount, 0);
+        const allResults = await prisma_1.default.sessionResult.findMany({
+            where: { session: { userId: req.userId } },
+            select: { category: true, score: true },
+        });
+        const categoryMap = new Map();
+        for (const r of allResults) {
+            const existing = categoryMap.get(r.category) ?? { total: 0, count: 0 };
+            categoryMap.set(r.category, {
+                total: existing.total + r.score,
+                count: existing.count + 1,
+            });
+        }
+        const categoryBreakdown = Array.from(categoryMap.entries()).map(([category, data]) => ({
+            category,
+            avgScore: Math.round((data.total / data.count) * 10) / 10,
+            questionsAnswered: data.count
+        }));
+        res.json({
+            stats: {
+                totalSessions,
+                bestAvgScore: Math.round(bestAvgScore * 10) / 10,
+                overallAvgScore: Math.round(overallAvgScore * 10) / 10,
+                totalQuestionsAnswered,
+                categoryBreakdown,
+            },
+        });
+    }
+    catch (err) {
+        console.error('getMyStats error:', err);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+}
