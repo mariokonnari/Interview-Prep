@@ -68,7 +68,7 @@ Interview Prep is a full-stack application designed to help developers prepare f
    Create a `.env` file in the `server` directory:
    ```env
    DATABASE_URL="your_postgresql_connection_string"
-   GEMINI_API_KEY="your_gemini_api_key"
+   GROQ_API_KEY="your_groq_api_key"
    JWT_SECRET="your_jwt_secret"
    PORT=3000
    ```
@@ -164,7 +164,7 @@ Interview-Prep/
 ```bash
 # Set environment variables in your hosting platform
 DATABASE_URL=your_production_db_url
-GEMINI_API_KEY=your_api_key
+GROQ_API_KEY=your_api_key
 JWT_SECRET=your_production_secret
 ```
 
