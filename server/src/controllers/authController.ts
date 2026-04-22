@@ -3,10 +3,10 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import prisma from '../lib/prisma'
 
-function signToken(userId: string): string {
+function signToken(userId: string, userRole: string): string {
   const secret = process.env.JWT_SECRET
   if (!secret) throw new Error('JWT_SECRET not configured')
-  return jwt.sign({ userId }, secret, {
+  return jwt.sign({ userId, userRole }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   } as jwt.SignOptions)
 }
@@ -38,10 +38,10 @@ export async function register(req: Request, res: Response): Promise<void> {
     const hashed = await bcrypt.hash(password, 12)
     const user = await prisma.user.create({
       data: { email, username, password: hashed },
-      select: { id: true, email: true, username: true, createdAt: true },
+      select: { id: true, email: true, username: true, role: true, createdAt: true },
     })
 
-    const token = signToken(user.id)
+    const token = signToken(user.id, user.role)
     res.status(201).json({ token, user })
   } catch (err) {
     console.error('register error:', err)
@@ -65,13 +65,14 @@ export async function login(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const token = signToken(user.id)
+    const token = signToken(user.id, user.role)
     res.json({
       token,
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
+        role: user.role,
         createdAt: user.createdAt,
       },
     })
@@ -88,7 +89,7 @@ export async function me(
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, email: true, username: true, createdAt: true },
+      select: { id: true, email: true, username: true, role: true, createdAt: true },
     })
 
     if (!user) {
