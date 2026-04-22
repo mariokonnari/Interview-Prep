@@ -3,10 +3,12 @@ import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request{
     userId?: string
+    userRole?: string
 }
 
 interface JwtPayload {
     userId: string
+    userRole: string
 }
 
 export function authMiddleware(
@@ -29,6 +31,7 @@ export function authMiddleware(
 
         const decoded = jwt.verify(token, secret) as JwtPayload
         req.userId = decoded.userId
+        req.userRole = decoded.userRole
         next()
     } catch {
         res.status(401).json({ error: "Invalid or expired token"})
