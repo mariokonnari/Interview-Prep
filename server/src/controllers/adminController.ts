@@ -123,3 +123,20 @@ export async function updateUserRole(req: AuthRequest, res: Response): Promise<v
         res.status(500).json({ error: "Failed to update user role" })
     }
 }
+
+export async function deleteUser(req: AuthRequest, res: Response): Promise<void> {
+    const { id } = req.params
+
+    if (id === req.userId) {
+        res.status(400).json({ error: "You cannot delete your own account" })
+        return
+    }
+
+    try {
+        await prisma.user.delete({ where: { id: id as string } })
+        res.json({ message: "User deleted" })
+    } catch (err) {
+        console.error("deleteUser error:", err)
+        res.status(500).json({ error: "Failed to delete user" })
+    }
+}
