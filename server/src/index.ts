@@ -5,6 +5,8 @@ import cors from 'cors'
 import authRoutes from './routes/auth'
 import sessionRoutes from './routes/sessions'
 import leaderboardRoutes from './routes/leaderboard'
+import adminRoutes from './routes/admin'
+import questionRoutes from './routes/questions'
 
 const app = express()
 
@@ -21,6 +23,8 @@ app.get('/health', (_req: express.Request, res: express.Response) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/sessions', sessionRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/questions', questionRoutes)
 
 app.use((_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: 'Route not found' })
