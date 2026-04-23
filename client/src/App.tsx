@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { QUESTIONS } from "./data/questions";
+import { useQuestions } from "./hooks/useQuestions";
 import type { SessionResult, Feedback } from "./types";
 import { useGroq } from "./hooks/useGroq";
 import ProgressBar from "./components/ProgressBar";
@@ -14,8 +14,9 @@ export default function App() {
   const [answers, setAnswers] = useState<Map<number, string>>(new Map())
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
   const { evaluate, loading, error } = useGroq()
+  const { questions, loading: questionsLoading, error: questionsError } = useQuestions()
 
-  const currentQuestion = QUESTIONS[currentIdx]
+  const currentQuestion = questions[currentIdx]
   const answeredCount = feedbacks.size
 
   const handleSubmit = useCallback(
@@ -30,7 +31,7 @@ export default function App() {
   )
 
   const handleNext = () => {
-    if (currentIdx <  QUESTIONS.length - 1) setCurrrentIdx((i) => i+ 1)
+    if (currentIdx <  questions.length - 1) setCurrrentIdx((i) => i+ 1)
       else setView('results')
   }
 
@@ -39,7 +40,7 @@ export default function App() {
   }
 
   const handleSkip = () => {
-    if (currentIdx < QUESTIONS.length - 1) setCurrrentIdx((i) => i + 1)
+    if (currentIdx < questions.length - 1) setCurrrentIdx((i) => i + 1)
       else setView('results')
   }
 
@@ -70,6 +71,31 @@ export default function App() {
     padding: '2rem 1.25rem',
   }
 
+  if (questionsLoading) {
+    return (
+      <div style={layout}>
+        <header style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '4px' }}>
+            Frontend interview prep
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+            Loading questions...
+          </p>
+        </header>
+      </div>
+    )
+  }
+
+  if (questionsError) {
+    return (
+      <div style={layout}>
+        <p style={{ color: 'var(--color-danger-text)', fontSize: '14px' }}>
+          {questionsError}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div style={layout}>
       {/* Header */}
@@ -84,12 +110,12 @@ export default function App() {
 
       {view === 'practice' ? (
         <>
-          <ProgressBar current={answeredCount} total={QUESTIONS.length} />
+          <ProgressBar current={answeredCount} total={questions.length} />
           <QuestionCard 
             key={currentQuestion.id}
             question={currentQuestion}
             index={currentIdx}
-            total={QUESTIONS.length}
+            total={questions.length}
             savedAnswer={answers.get(currentQuestion.id)}
             savedFeedback={feedbacks.get(currentQuestion.id)}
             onSubmit={handleSubmit}
@@ -98,13 +124,13 @@ export default function App() {
             onSkip={handleSkip}
             loading={loading}
             error={error}
-            isLast={currentIdx === QUESTIONS.length - 1}
+            isLast={currentIdx === questions.length - 1}
             onFinish={handleFinish}
           />
         </>
       ) : (
         <ResultsScreen 
-          questions={QUESTIONS}
+          questions={questions}
           results={results}
           onRestart={handleRestart}
         />
