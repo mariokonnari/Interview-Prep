@@ -66,6 +66,12 @@ export const leaderboardApi = {
     getMyStats: () => request<{ stats: UserStats }>('/leaderboard/my-stats'),
 }
 
+// Questions
+
+export const questionsApi = {
+    getAll: () => request<{ questions: Question[] }>('/questions'),
+}
+
 // Types
 
 export interface User {
@@ -119,4 +125,11 @@ export interface UserStats {
         avgScore: number
         questionsAnswered: number
     }[]
+}
+
+export interface Question {
+    id: number
+    category: string
+    text: string
+    hint: string
 }
