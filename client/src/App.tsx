@@ -10,7 +10,7 @@ type View = 'practice' | 'results'
 
 export default function App() {
   const [view, setView] = useState<View>('practice')
-  const [currentIdx, setCurrrentIdx] = useState(0)
+  const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Map<number, string>>(new Map())
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
   const { evaluate, loading, error } = useGroq()
@@ -31,23 +31,23 @@ export default function App() {
   )
 
   const handleNext = () => {
-    if (currentIdx <  questions.length - 1) setCurrrentIdx((i) => i+ 1)
+    if (currentIdx <  questions.length - 1) setCurrentIdx((i) => i+ 1)
       else setView('results')
   }
 
   const handlePrev = () => {
-    if (currentIdx > 0) setCurrrentIdx((i) => i - 1)
+    if (currentIdx > 0) setCurrentIdx((i) => i - 1)
   }
 
   const handleSkip = () => {
-    if (currentIdx < questions.length - 1) setCurrrentIdx((i) => i + 1)
+    if (currentIdx < questions.length - 1) setCurrentIdx((i) => i + 1)
       else setView('results')
   }
 
   const handleFinish = () => setView('results')
 
   const handleRestart = () => {
-    setCurrrentIdx(0)
+    setCurrentIdx(0)
     setAnswers(new Map())
     setFeedbacks(new Map())
     setView('practice')
