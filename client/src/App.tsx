@@ -5,8 +5,10 @@ import { useGroq } from "./hooks/useGroq";
 import ProgressBar from "./components/ProgressBar";
 import QuestionCard from "./components/QuestionCard";
 import ResultsScreen from "./components/ResultsScreen";
+import { useAuth } from "./context/AuthContext";
+import AdminPanel from "./components/AdminPanel";
 
-type View = 'practice' | 'results'
+type View = 'practice' | 'results' | 'admin'
 
 export default function App() {
   const [view, setView] = useState<View>('practice')
@@ -15,6 +17,7 @@ export default function App() {
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
   const { evaluate, loading, error } = useGroq()
   const { questions, loading: questionsLoading, error: questionsError } = useQuestions()
+  const { user, isAdmin, logout } = useAuth()
 
   const currentQuestion = questions[currentIdx]
   const answeredCount = feedbacks.size
@@ -98,6 +101,56 @@ export default function App() {
 
   return (
     <div style={layout}>
+      {/* Nav */}
+      <nav style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2rem',
+        paddingBottom: '1rem',
+        borderBottom: '1px solid var(--color-border)',
+      }}>
+        <span style={{fontSize:'14px', color: 'var(--color-text-secondary)' }}>
+          {user ? `@${user.username}` : 'Guest'}
+        </span>
+        <div style={{ display: "flex", gap: '8px' }}>
+          {isAdmin && (
+            <button
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border-strong)',
+                background: view === 'admin' ? 'var(--color-accent)' : 'var(--color-surface)',
+                color: view === 'admin' ? '#fff' : 'var(--color-text-primary)',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
+              onClick={() => setView(view === 'admin' ? 'practice' : 'admin')}
+            >
+              {view === 'admin' ? 'Back to practice' : 'Admin'}
+            </button>
+          )}
+          {user && (
+            <button
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border-strong)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-primary)',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
+              onClick={logout}
+            >
+              Log out
+            </button>
+          )}
+        </div>
+      </nav>
+
       {/* Header */}
       <header style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '4px' }}>
@@ -108,7 +161,9 @@ export default function App() {
         </p>
       </header>
 
-      {view === 'practice' ? (
+      {view === 'admin' ? (
+        <AdminPanel />
+      ) : view === 'practice' ? (
         <>
           <ProgressBar current={answeredCount} total={questions.length} />
           <QuestionCard 
