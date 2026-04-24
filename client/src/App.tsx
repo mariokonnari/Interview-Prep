@@ -7,6 +7,7 @@ import QuestionCard from "./components/QuestionCard";
 import ResultsScreen from "./components/ResultsScreen";
 import { useAuth } from "./context/AuthContext";
 import AdminPanel from "./components/AdminPanel";
+import AuthScreen from "./components/AuthScreen";
 
 type View = 'practice' | 'results' | 'admin'
 
@@ -17,7 +18,7 @@ export default function App() {
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
   const { evaluate, loading, error } = useGroq()
   const { questions, loading: questionsLoading, error: questionsError } = useQuestions()
-  const { user, isAdmin, logout } = useAuth()
+  const { user, isAdmin, logout, loading: authLoading } = useAuth()
 
   const currentQuestion = questions[currentIdx]
   const answeredCount = feedbacks.size
@@ -99,6 +100,18 @@ export default function App() {
     )
   }
 
+  if (authLoading) {
+    return (
+      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '2rem 1.25rem' }}>
+        <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <AuthScreen />
+  }
+
   return (
     <div style={layout}>
       {/* Nav */}
@@ -154,7 +167,7 @@ export default function App() {
       {/* Header */}
       <header style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '4px' }}>
-          Frontend interview prerp
+          Frontend interview prep
         </h1>
         <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
           Answer each question and get AI feedback on your response.
