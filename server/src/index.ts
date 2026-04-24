@@ -7,6 +7,7 @@ import sessionRoutes from './routes/sessions'
 import leaderboardRoutes from './routes/leaderboard'
 import adminRoutes from './routes/admin'
 import questionRoutes from './routes/questions'
+import bodyParser from 'body-parser'
 
 const app = express()
 
@@ -14,7 +15,8 @@ app.use(cors({
   origin: process.env.CLIENT_URL ?? 'http://localhost:5173',
   credentials: true,
 }))
-app.use(express.json())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/health', (_req: express.Request, res: express.Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
