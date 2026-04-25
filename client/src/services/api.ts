@@ -72,6 +72,28 @@ export const questionsApi = {
     getAll: () => request<{ questions: Question[] }>('/questions'),
 }
 
+// Rooms
+
+export const roomsApi = {
+    create: () =>
+        request<{ room: Room }>('/rooms', { method: 'POST' }),
+
+    join: (code: string) => 
+        request<{ room: Room }>('/rooms/join', {
+            method: 'POST',
+            body: JSON.stringify({ code })
+        }),
+
+    get: (code: string) =>
+        request<{ room: Room }>(`/rooms/${code}`),
+
+    advance: (code: string) =>
+        request<{ room: Room }>(`/rooms/${code}/advance`, { method: 'POST' }),
+
+    finish: (code: string) =>
+        request<{ room: Room }>(`/rooms/${code}/finish`, {method: 'POST'}),
+}
+
 // Types
 
 export interface User {
@@ -133,4 +155,26 @@ export interface Question {
     category: string
     text: string
     hint: string
+}
+
+export interface Room {
+    id: string
+    code: string
+    hostId: string
+    status: string
+    currentQ: number
+    createdAt: string
+    participants: RoomParticipant[]
+}
+
+export interface RoomParticipant {
+    id: string
+    roomId: string
+    userId: string
+    role: string
+    joinedAt: string
+    user: {
+        id: string
+        username: string
+    }
 }
