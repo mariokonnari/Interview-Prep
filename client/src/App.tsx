@@ -8,14 +8,18 @@ import ResultsScreen from "./components/ResultsScreen";
 import { useAuth } from "./context/AuthContext";
 import AdminPanel from "./components/AdminPanel";
 import AuthScreen from "./components/AuthScreen";
+import MultiplayerLobby from "./components/MultiplayerLobby";
+import MultiplayerSession from "./components/MultiplayerSession";
+import { type Room } from "./services/api";
 
-type View = 'practice' | 'results' | 'admin'
+type View = 'practice' | 'results' | 'admin' | 'multiplayer' | 'multiplayer-session'
 
 export default function App() {
   const [view, setView] = useState<View>('practice')
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Map<number, string>>(new Map())
   const [feedbacks, setFeedbacks] = useState<Map<number, Feedback>>(new Map())
+  const [activeRoom, setActiveRoom] = useState<Room | null>(null)
   const { evaluate, loading, error } = useGroq()
   const { questions, loading: questionsLoading, error: questionsError } = useQuestions()
   const { user, isAdmin, logout, loading: authLoading } = useAuth()
@@ -144,6 +148,27 @@ export default function App() {
               {view === 'admin' ? 'Back to practice' : 'Admin'}
             </button>
           )}
+
+          {/* Multiplayer button - visible to all logged in users */}
+          {user && (
+            <button
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border-strong)',
+                background: view === 'multiplayer' || view === 'multiplayer-session' ? 'var(--color-accent)' : 'var(color-surface)',
+                color: view === 'multiplayer' || view === 'multiplayer-session' ? '#fff' : 'var(--color-text-primary)',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)'
+              }}
+              onClick={() => setView(view === 'multiplayer' || view === 'multiplayer-session' ? 'practice' : 'multiplayer'
+              )}
+            >
+              Multiplayer
+            </button>
+          )}
+
           {user && (
             <button
               style={{
@@ -176,6 +201,23 @@ export default function App() {
 
       {view === 'admin' ? (
         <AdminPanel />
+      ) : view === 'multiplayer' ? (
+        <MultiplayerLobby
+          onRoomJoined={(room) => {
+            setActiveRoom(room)
+            setView('multiplayer-session')
+          }}
+          onBack={() => setView('practice')}
+        />
+      ) : view === 'multiplayer-session' && activeRoom? (
+        <MultiplayerSession
+          initialRoom={activeRoom}
+          questions={questions}
+          onLeave={() => {
+            setActiveRoom(null) 
+            setView('practice')
+          }}
+        />
       ) : view === 'practice' ? (
         <>
           <ProgressBar current={answeredCount} total={questions.length} />
