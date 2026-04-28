@@ -1,106 +1,118 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../lib/supabase";
-import { roomsApi, type Room } from "../services/api";
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '../lib/supabase'
+import { roomsApi, type Room } from '../services/api'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface BroadcastAnswer {
-    userId: string
-    username: string
-    answer: string
-    score: number
-    feedback: string
+  userId: string
+  username: string
+  answer: string
+  score: number
+  feedback: string
 }
 
 export function useRoom(code: string | null) {
-    const [room, setRoom] = useState<Room | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [receivedAnswers, setReceivedAnswers] = useState<Map<string, BroadcastAnswer>>(new Map<string, BroadcastAnswer>())
+  const [room, setRoom] = useState<Room | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [receivedAnswers, setReceivedAnswers] = useState<Map<string, BroadcastAnswer>>(
+    new Map<string, BroadcastAnswer>()
+  )
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
-    //fetch room state
-    const fetchRoom = useCallback(async () => {
-        if (!code) return
-        try {
-            const { room } = await roomsApi.get(code)
-            setRoom(room)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch room')
-        }
-    }, [code])
+  const fetchRoom = useCallback(async () => {
+    if (!code) return
+    try {
+      const { room } = await roomsApi.get(code)
+      setRoom(room)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch room')
+    }
+  }, [code])
 
-    const broadcastAnswer = useCallback(
-        async (answer: BroadcastAnswer) => {
-            if (!code) return
-            await supabase.channel(`room:${code}`).send({
-                type: 'broadcast',
-                event: 'answer_submitted',
-                payload: answer,
-            })
+  const broadcastAnswer = useCallback(async (answer: BroadcastAnswer) => {
+    if (!channelRef.current) return
+    await channelRef.current.send({
+      type: 'broadcast',
+      event: 'answer_submitted',
+      payload: answer,
+    })
+  }, [])
+
+  const resetAnswers = useCallback(() => {
+    setReceivedAnswers(new Map<string, BroadcastAnswer>())
+  }, [])
+
+  useEffect(() => {
+    if (!code) return
+
+    setLoading(true)
+    setReceivedAnswers(new Map<string, BroadcastAnswer>())
+    fetchRoom().finally(() => setLoading(false))
+
+    const channel = supabase
+      .channel(`room:${code}`, {
+        config: { broadcast: { self: true } },
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'Room',
+          filter: `code=eq.${code}`,
         },
-        [code]
-    )
-
-    //subscribe to realtime changes on the Room table
-    useEffect(() => {
-        if (!code) return
-
-        setLoading(true)
-        setReceivedAnswers(new Map<string, BroadcastAnswer>())
-        fetchRoom().finally(() => setLoading(false))
-
-        const channel = supabase
-            .channel(`room:${code}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'Room',
-                    filter: `code=eq.${code}`,
-                },
-                () => {
-                    //any changes to this room refresh
-                    fetchRoom()
-                }
-            )
-            .on('broadcast', { event: 'answer_submitted' }, ({ payload }) => {
-                const answer = payload as BroadcastAnswer
-                setReceivedAnswers((prev) => {
-                    const next = new Map<string, BroadcastAnswer>(prev)
-                    next.set(answer.userId, answer)
-                    return next
-                })
-            })
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
+        () => {
+          fetchRoom()
         }
-    }, [code, fetchRoom])
+      )
+      .on('broadcast', { event: 'answer_submitted' }, ({ payload }) => {
+        const answer = payload as BroadcastAnswer
+        setReceivedAnswers((prev) => {
+          const next = new Map<string, BroadcastAnswer>(prev)
+          next.set(answer.userId, answer)
+          return next
+        })
+      })
+      .subscribe()
 
-    //reset received answers when question changes
-    const resetAnswers = useCallback(() => {
-        setReceivedAnswers(new Map<string, BroadcastAnswer>())
-    }, [])
+    channelRef.current = channel
 
-    const advance = async () => {
-        if (!code) return
-        try {
-            const { room } = await roomsApi.advance(code)
-            setRoom(room)
-        } catch (err) {
-            setError(err instanceof Error ? err.message: 'Failed to advance')
-        }
+    return () => {
+      supabase.removeChannel(channel)
+      channelRef.current = null
     }
+  }, [code, fetchRoom])
 
-    const finish = async () => {
-        if (!code) return
-        try {
-            const { room } = await roomsApi.finish(code)
-            setRoom(room)
-        } catch (err) {
-            setError(err instanceof Error ? err.message: 'Failed to finish room')
-        }
+  const advance = async () => {
+    if (!code) return
+    try {
+      const { room } = await roomsApi.advance(code)
+      setRoom(room)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to advance')
     }
+  }
 
-    return { room, loading, error, fetchRoom, advance, finish, receivedAnswers, broadcastAnswer, resetAnswers }
+  const finish = async () => {
+    if (!code) return
+    try {
+      const { room } = await roomsApi.finish(code)
+      setRoom(room)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to finish room')
+    }
+  }
+
+  return {
+    room,
+    loading,
+    error,
+    fetchRoom,
+    advance,
+    finish,
+    receivedAnswers,
+    broadcastAnswer,
+    resetAnswers,
+  }
 }
