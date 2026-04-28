@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { roomsApi, type Room } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 
 interface Props {
     onRoomJoined: (room: Room) => void
@@ -12,7 +11,6 @@ export default function MultiplayerLobby({ onRoomJoined, onBack }: Props) {
     const [joinCode, setJoinCode] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const { user } = useAuth()
 
     const handleCreate = async () => {
         setLoading(true)
