@@ -9,12 +9,12 @@
 
 ## ✨ Overview
 
-Interview Prep is a full-stack application designed to help developers prepare for frontend engineering interviews through collaborative learning and AI-assisted practice. The platform combines real-world interview questions with intelligent feedback powered by Groq AI.
+Interview Prep is a full-stack application designed to help developers prepare for frontend engineering interviews through collaborative learning and AI-assisted practice. The platform combines real-world interview questions with intelligent feedback powered by Groq AI, and supports **live collaborative editing** via Supabase Realtime — so multiple users can work through questions together in real time.
 
 ### Key Features
 
 - **🤖 AI-Powered Feedback**: Leverage Groq AI for intelligent code reviews and suggestions
-- **👥 Collaborative Learning**: Work together with peers in real-time
+- **👥 Live Collaboration**: Multiple users can edit and solve the same question simultaneously using Supabase Realtime WebSockets
 - **📝 Comprehensive Question Bank**: Curated frontend interview questions covering JavaScript, TypeScript, React, and more
 - **💾 Progress Tracking**: Save your solutions and track your improvement over time
 - **🎯 Structured Practice**: Organized by difficulty and topic areas
@@ -33,6 +33,7 @@ Interview Prep is a full-stack application designed to help developers prepare f
 - **Express** - Web application framework
 - **Prisma** - Next-generation ORM
 - **PostgreSQL** (Supabase) - Database
+- **Supabase Realtime** - WebSocket-based live collaboration
 - **Groq AI** - AI integration
 
 ## 🚦 Getting Started
@@ -76,6 +77,8 @@ Interview Prep is a full-stack application designed to help developers prepare f
    Create a `.env` file in the `client` directory:
    ```env
    VITE_API_URL="http://localhost:3000"
+   VITE_SUPABASE_URL="your_supabase_project_url"
+   VITE_SUPABASE_ANON_KEY="your_supabase_anon_key"
    ```
 
 4. **Database Setup**
@@ -117,7 +120,7 @@ Interview-Prep/
 │   ├── src/
 │   │   ├── routes/        # API routes
 │   │   ├── controllers/   # Request handlers
-│   │   ├── middleware/    # Express middleware
+│   │   ├── middleware/     # Express middleware
 │   │   ├── services/      # Business logic
 │   │   └── prisma/        # Database schema and migrations
 │   └── package.json
@@ -132,7 +135,13 @@ Interview-Prep/
 - Filter by difficulty level (Easy, Medium, Hard)
 - Search functionality for quick access
 
-### 2. AI-Powered Code Review
+### 2. Live Collaborative Editing
+- Multiple users can join the same question session simultaneously
+- Real-time code synchronization powered by **Supabase Realtime WebSockets**
+- Changes are broadcast instantly across all connected clients — no refresh needed
+- Designed for pair practice and mock interview scenarios
+
+### 3. AI-Powered Code Review
 - Submit your solutions for AI analysis
 - Receive detailed feedback on:
   - Code quality and best practices
@@ -140,12 +149,12 @@ Interview-Prep/
   - Potential optimizations
   - Common pitfalls and edge cases
 
-### 3. User Authentication
+### 4. User Authentication
 - Secure JWT-based authentication
 - Password hashing with bcrypt
 - Protected routes and API endpoints
 
-### 4. Progress Tracking
+### 5. Progress Tracking
 - Save and revisit your solutions
 - Track completed questions
 - Monitor improvement over time
@@ -178,6 +187,8 @@ dist
 
 # Environment variables
 VITE_API_URL=your_backend_url
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ## 🤝 Contributing
@@ -195,12 +206,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 **Marios Konnari**
 
 - GitHub: [@mariokonnari](https://github.com/mariokonnari)
-- Portfolio: [\[Your Portfolio URL\]](https://marios-portfolio-website.vercel.app/)
+- Portfolio: [marios-portfolio-website.vercel.app](https://marios-portfolio-website.vercel.app/)
 
 ## 🙏 Acknowledgments
 
 - Groq AI for intelligent code analysis
-- Supabase for database infrastructure
+- Supabase for database infrastructure and real-time collaboration
 - The frontend development community for inspiration
 
 ---
